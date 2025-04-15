@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樞紐分析設定工具</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2, h3 {
+            color: #26a862;
+        }
+        
+        .container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section {
+            margin-bottom: 0px;
+            padding-bottom: 15px;
+        }
+        
+        .section-with-border {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #26a862;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #218a52;
+        }
+        
+        .help-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .results {
+            margin-top: 10px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+        
+        .pivot-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .pivot-table th {
+            background-color: #26a862;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+        
+        .pivot-table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        
+        .pivot-filter, .pivot-row, .pivot-column, .pivot-value {
+            background-color: #e8f5ee;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .summary {
+            background-color: #e8f5ee;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #26a862;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .bold {
+            font-weight: bold;
+        }
+        
+        .pivot-example {
+            margin: 20px 0;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .pivot-example th, .pivot-example td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .pivot-example th {
+            background-color: #26a862;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .pivot-example .col-header, .pivot-example .row-header {
+            background-color: #e8f5ee;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .pivot-example .value-cell {
+            background-color: white;
+            color: #000;
+        }
+        
+        .pivot-example .total-cell {
+            background-color: #e6e6e6;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .pivot-example .grand-total-cell {
+            background-color: #D8D8D8;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .example-container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .example-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #26a862;
+        }
+        
+        .divider {
+            position: relative;
+            height: 50px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .divider::before {
+            content: "";
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #e2e8f0;
+        }
+        
+        .divider::after {
+            content: "▼";
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f8f9fa;
+            padding: 0 10px;
+            color: #26a862;
+            font-size: 14px;
+        }
+        
+        @media print {
+            button.no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>樞紐分析設定工具</h1>
+        
+        <div id="summary" class="summary" style="display: none;"></div>
+        
+        <div id="example-container" class="example-container" style="display: none;">
+            <h3 class="example-title">示意圖：</h3>
+            <table class="pivot-example" id="preview-example">
+                <!-- 樞紐分析表示意圖 - 將由JavaScript動態生成 -->
+            </table>
+        </div>
+        
+        <form id="pivotForm">
+            <div class="section">
+                <div class="form-group">
+                    <label for="row-area">想看哪個【列】的資料？</label>
+                    <p class="help-text">例：每個【專案】的資料，就填「專案」</p>
+                    <input type="text" id="row-area" oninput="updatePreview()">
+                </div>
+                
+                <div class="form-group">
+                    <label for="column-area">想依照哪個【欄】檢視每個【<span id="row-display" class="bold">列</span>】的資料？</label>
+                    <p class="help-text">例：每個【<span id="row-display2">列</span>】不同【月】的資料，就填「月」</p>
+                    <input type="text" id="column-area" oninput="updatePreview()">
+                </div>
+                
+                <div class="form-group">
+                    <label for="filter-area">想根據哪個【篩選項目】篩選數據？（選填）</label>
+                    <p class="help-text">例：想根據【月】篩選數據，就填「月」</p>
+                    <input type="text" id="filter-area" oninput="updatePreview()">
+                </div>
+                
+                <div class="form-group">
+                    <label for="value-area">想計算哪個【值】的數據？</label>
+                    <p class="help-text">例：計算【人數】的數據，就填「人數」</p>
+                    <input type="text" id="value-area" oninput="updatePreview()">
+                </div>
+                
+                <div class="form-group">
+                    <label for="calculation-method">數據的計算方式：</label>
+                    <select id="calculation-method" onchange="updatePreview()">
+                        <option value="sum">總和 - 將所有數值加總</option>
+                        <option value="count">計數 - 計算項目出現的次數</option>
+                        <option value="average">平均值 - 計算平均數</option>
+                        <option value="max">最大值 - 找出最大的數值</option>
+                        <option value="min">最小值 - 找出最小的數值</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="display-method">數據的呈現方式：</label>
+                    <select id="display-method" onchange="updatePreview()">
+                        <option value="normal">原始值 - 實際數字，如：300,000元</option>
+                        <option value="percent-total">總計百分比 - 佔全部的比例，如：23%</option>
+                        <option value="percent-row">列總計百分比 - 佔該列總計的比例，如：8.5%</option>
+                        <option value="percent-column">欄總計百分比 - 佔該欄總計的比例，如：32%</option>
+                        <option value="diff-prev">與上一項的差異 - 與前一項的增減，如：+50,000元</option>
+                        <option value="percent-diff">與上一項的百分比 - 與前一項相比的百分比，如：115%</option>
+                        <option value="running-total">累計總計 - 累計到當前項的總和，如：850,000元</option>
+                        <option value="percent-parent">分項佔小計的百分比 - 佔所屬群組的比例，如：45%</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button type="button" onclick="generateGuide()">生成設定指南</button>
+            </div>
+        </form>
+        
+        <div id="divider" class="divider" style="display: none;"></div>
+        
+        <div id="results" class="results">
+            <h2>你的設定</h2>
+            
+            <div class="section">
+                <table class="pivot-table">
+                    <tr>
+                        <th>區域</th>
+                        <th>說明</th>
+                        <th>設定的欄位</th>
+                    </tr>
+                    <tr>
+                        <td class="pivot-filter">篩選</td>
+                        <td>用於篩選整個表格的數據</td>
+                        <td id="result-filters">-</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot-row">列</td>
+                        <td>數據的主要分組，顯示在表格的最左側直行</td>
+                        <td id="result-rows">-</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot-column">欄</td>
+                        <td>數據的次要分組，顯示在表格的最上方橫列</td>
+                        <td id="result-columns">-</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot-value">值</td>
+                        <td>要計算的數值</td>
+                        <td id="result-values">-</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h3>在Excel中設定步驟</h3>
+                <ol id="setup-steps">
+                    <!-- 這裡會動態填充設定步驟 -->
+                </ol>
+            </div>
+            
+            <div class="button-container">
+                <button type="button" onclick="backToForm()" class="no-print">返回修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 當列欄位變更時同步顯示到欄欄位的提示文字中
+        document.getElementById('row-area').addEventListener('input', function() {
+            const rowValue = this.value.trim() || '列';
+            document.getElementById('row-display').textContent = rowValue;
+            document.getElementById('row-display2').textContent = rowValue;
+        });
+        
+        // 返回修改表單
+        function backToForm() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('divider').style.display = 'none';
+        }
+        
+        // 即時更新摘要和預覽
+        function updatePreview() {
+            // 更新摘要
+            updateSummary();
+            
+            // 獲取輸入值
+            const rowField = document.getElementById('row-area').value.trim();
+            const columnField = document.getElementById('column-area').value.trim();
+            const valueField = document.getElementById('value-area').value.trim();
+            const calculationMethod = document.getElementById('calculation-method').value;
+            const displayMethod = document.getElementById('display-method').value;
+            
+            // 如果必填欄位未填寫，隱藏預覽
+            if ((!rowField && !columnField) || !valueField) {
+                document.getElementById('example-container').style.display = 'none';
+                return;
+            }
+            
+            // 顯示預覽容器
+            document.getElementById('example-container').style.display = 'block';
+            
+            // 生成預覽
+            generateSimplePivotExample(rowField, columnField, valueField, calculationMethod, displayMethod);
+        }
+        
+        // 即時更新摘要
+        function updateSummary() {
+            // 獲取輸入值
+            const rowField = document.getElementById('row-area').value.trim();
+            const columnField = document.getElementById('column-area').value.trim();
+            const filterField = document.getElementById('filter-area').value.trim();
+            const valueField = document.getElementById('value-area').value.trim();
+            
+            // 如果必填欄位未填寫，隱藏摘要
+            if ((!rowField && !columnField) || !valueField) {
+                document.getElementById('summary').style.display = 'none';
+                return;
+            }
+            
+            // 生成摘要文字
+            let summaryText = '結果：';
+            
+            // 篩選部分
+            if (filterField) {
+                summaryText += `篩選某個【${filterField}】，`;
+            }
+            
+            // 列和欄部分
+            if (rowField && columnField) {
+                // 既有列也有欄
+                summaryText += `檢視每個【${rowField}】，在不同【${columnField}】的【${valueField}】`;
+            } else if (rowField) {
+                // 只有列
+                summaryText += `檢視不同【${rowField}】的【${valueField}】`;
+            } else if (columnField) {
+                // 只有欄
+                summaryText += `檢視不同【${columnField}】的【${valueField}】`;
+            }
+            
+            // 顯示摘要
+            const summaryElement = document.getElementById('summary');
+            summaryElement.textContent = summaryText;
+            summaryElement.style.display = 'block';
+        }
+        
+        // 生成簡化版樞紐分析表示意圖
+        function generateSimplePivotExample(rowField, columnField, valueField, calculationMethod, displayMethod) {
+            const table = document.getElementById('preview-example');
+            table.innerHTML = '';
+            
+            // 取得計算方式和顯示方式文字
+            const calculationText = getCalculationText(calculationMethod);
+            const displayText = getDisplayText(displayMethod);
+            
+            // 如果沒有列或欄，顯示簡單表格
+            if (!rowField && !columnField) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.textContent = '請至少填寫列或欄欄位';
+                cell.setAttribute('colspan', 3);
+                row.appendChild(cell);
+                table.appendChild(row);
+                return;
+            }
+            
+            // 只有列，沒有欄
+            if (rowField && !columnField) {
+                const headerRow = document.createElement('tr');
+                
+                const rowHeaderCell = document.createElement('th');
+                rowHeaderCell.textContent = rowField;
+                headerRow.appendChild(rowHeaderCell);
+                
+                const valueHeaderCell = document.createElement('th');
+                valueHeaderCell.textContent = valueField;
+                headerRow.appendChild(valueHeaderCell);
+                
+                const totalHeaderCell = document.createElement('th');
+                totalHeaderCell.textContent = '總計';
+                headerRow.appendChild(totalHeaderCell);
+                
+                table.appendChild(headerRow);
+                
+                // 添加示例數據
+                createRowWithTotal(table, `${rowField}.A`, '數值', '數值', 'row-header', 'value-cell', 'total-cell');
+                createRowWithTotal(table, `${rowField}.B`, '數值', '數值', 'row-header', 'value-cell', 'total-cell');
+                createRowWithTotal(table, '總計', '數值', '數值', 'total-cell', 'total-cell', 'grand-total-cell');
+                
+                return;
+            }
+            
+            // 只有欄，沒有列
+            if (!rowField && columnField) {
+                const headerRow = document.createElement('tr');
+                
+                const colHeaderCell = document.createElement('th');
+                colHeaderCell.textContent = columnField;
+                headerRow.appendChild(colHeaderCell);
+                
+                const valueHeaderCell = document.createElement('th');
+                valueHeaderCell.textContent = valueField;
+                headerRow.appendChild(valueHeaderCell);
+                
+                const totalHeaderCell = document.createElement('th');
+                totalHeaderCell.textContent = '總計';
+                headerRow.appendChild(totalHeaderCell);
+                
+                table.appendChild(headerRow);
+                
+                // 添加示例數據
+                createRowWithTotal(table, `${columnField}.A`, '數值', '數值', 'col-header', 'value-cell', 'total-cell');
+                createRowWithTotal(table, `${columnField}.B`, '數值', '數值', 'col-header', 'value-cell', 'total-cell');
+                createRowWithTotal(table, '總計', '數值', '數值', 'total-cell', 'total-cell', 'grand-total-cell');
+                
+                return;
+            }
+            
+            // 既有列也有欄
+            // 創建表頭
+            const headerRow = document.createElement('tr');
+            
+            const cornerCell = document.createElement('th');
+            cornerCell.textContent = rowField + ' \\ ' + columnField;
+            headerRow.appendChild(cornerCell);
+            
+            // 添加欄標題和總計
+            const colHeader1 = document.createElement('th');
+            colHeader1.textContent = `${columnField}.A`;
+            colHeader1.className = 'col-header';
+            headerRow.appendChild(colHeader1);
+            
+            const colHeader2 = document.createElement('th');
+            colHeader2.textContent = `${columnField}.B`;
+            colHeader2.className = 'col-header';
+            headerRow.appendChild(colHeader2);
+            
+            const colHeaderTotal = document.createElement('th');
+            colHeaderTotal.textContent = '總計';
+            colHeaderTotal.className = 'total-cell';
+            headerRow.appendChild(colHeaderTotal);
+            
+            table.appendChild(headerRow);
+            
+            // 添加第一行數據
+            const dataRow1 = document.createElement('tr');
+            
+            const rowHeader1 = document.createElement('td');
+            rowHeader1.textContent = `${rowField}.A`;
+            rowHeader1.className = 'row-header';
+            dataRow1.appendChild(rowHeader1);
+            
+            const valueCell1 = document.createElement('td');
+            valueCell1.textContent = '數值';
+            valueCell1.className = 'value-cell';
+            dataRow1.appendChild(valueCell1);
+            
+            const valueCell2 = document.createElement('td');
+            valueCell2.textContent = '數值';
+            valueCell2.className = 'value-cell';
+            dataRow1.appendChild(valueCell2);
+            
+            const totalCell1 = document.createElement('td');
+            totalCell1.textContent = '數值';
+            totalCell1.className = 'total-cell';
+            dataRow1.appendChild(totalCell1);
+            
+            table.appendChild(dataRow1);
+            
+            // 添加第二行數據
+            const dataRow2 = document.createElement('tr');
+            
+            const rowHeader2 = document.createElement('td');
+            rowHeader2.textContent = `${rowField}.B`;
+            rowHeader2.className = 'row-header';
+            dataRow2.appendChild(rowHeader2);
+            
+            const valueCell3 = document.createElement('td');
+            valueCell3.textContent = '數值';
+            valueCell3.className = 'value-cell';
+            dataRow2.appendChild(valueCell3);
+            
+            const valueCell4 = document.createElement('td');
+            valueCell4.textContent = '數值';
+            valueCell4.className = 'value-cell';
+            dataRow2.appendChild(valueCell4);
+            
+            const totalCell2 = document.createElement('td');
+            totalCell2.textContent = '數值';
+            totalCell2.className = 'total-cell';
+            dataRow2.appendChild(totalCell2);
+            
+            table.appendChild(dataRow2);
+            
+            // 添加總計行
+            const totalRow = document.createElement('tr');
+            
+            const totalRowHeader = document.createElement('td');
+            totalRowHeader.textContent = '總計';
+            totalRowHeader.className = 'total-cell';
+            totalRow.appendChild(totalRowHeader);
+            
+            const totalValueCell1 = document.createElement('td');
+            totalValueCell1.textContent = '數值';
+            totalValueCell1.className = 'total-cell';
+            totalRow.appendChild(totalValueCell1);
+            
+            const totalValueCell2 = document.createElement('td');
+            totalValueCell2.textContent = '數值';
+            totalValueCell2.className = 'total-cell';
+            totalRow.appendChild(totalValueCell2);
+            
+            // 右下角的總計單元格使用特殊的類別
+            const grandTotal = document.createElement('td');
+            grandTotal.textContent = '數值';
+            grandTotal.className = 'grand-total-cell';
+            totalRow.appendChild(grandTotal);
+            
+            table.appendChild(totalRow);
+        }
+        
+        // 輔助函數：創建表格行（含總計）
+        function createRowWithTotal(table, cell1Text, cell2Text, totalText, cell1Class, cell2Class, totalClass) {
+            const row = document.createElement('tr');
+            
+            const cell1 = document.createElement('td');
+            cell1.textContent = cell1Text;
+            cell1.className = cell1Class;
+            row.appendChild(cell1);
+            
+            const cell2 = document.createElement('td');
+            cell2.textContent = cell2Text;
+            cell2.className = cell2Class;
+            row.appendChild(cell2);
+            
+            const totalCell = document.createElement('td');
+            totalCell.textContent = totalText;
+            totalCell.className = totalClass;
+            row.appendChild(totalCell);
+            
+            table.appendChild(row);
+        }
+        
+        function generateGuide() {
+            // 獲取輸入值
+            const rowField = document.getElementById('row-area').value.trim();
+            const columnField = document.getElementById('column-area').value.trim();
+            const filterField = document.getElementById('filter-area').value.trim();
+            const valueField = document.getElementById('value-area').value.trim();
+            const calculationMethod = document.getElementById('calculation-method').value;
+            const displayMethod = document.getElementById('display-method').value;
+            
+            // 基本驗證
+            let hasError = false;
+            
+            if (!rowField && !columnField) {
+                alert('請至少填寫列或欄區域欄位');
+                hasError = true;
+            }
+            
+            if (!valueField) {
+                alert('請填寫值區域欄位');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                return;
+            }
+            
+            // 填充結果表格
+            document.getElementById('result-filters').textContent = filterField || '-';
+            document.getElementById('result-rows').textContent = rowField || '-';
+            document.getElementById('result-columns').textContent = columnField || '-';
+            
+            // 根據計算方式和顯示方式生成值區域描述
+            const calculationText = getCalculationText(calculationMethod);
+            const displayText = getDisplayText(displayMethod);
+            document.getElementById('result-values').textContent = `${valueField} (${calculationText}, ${displayText})`;
+            
+            // 生成設定步驟
+            const setupSteps = document.getElementById('setup-steps');
+            setupSteps.innerHTML = '';
+            
+            // 步驟1：選擇資料
+            const step1 = document.createElement('li');
+            step1.innerHTML = '<strong>選擇您的資料範圍：</strong><br>點選包含所有資料的範圍（包括欄位標題）';
+            setupSteps.appendChild(step1);
+            
+            // 步驟2：插入樞紐分析表
+            const step2 = document.createElement('li');
+            step2.innerHTML = '<strong>插入樞紐分析表：</strong><br>點選「插入」標籤 → 點選「樞紐分析表」 → 確認資料範圍並選擇「新工作表」';
+            setupSteps.appendChild(step2);
+            
+            // 步驟3：設定樞紐分析表欄位
+            const step3 = document.createElement('li');
+            step3.innerHTML = '<strong>設定樞紐分析表欄位：</strong><br>在右側的「樞紐分析表欄位」面板中：';
+            
+            let fieldSettings = '<ul>';
+            
+            // 篩選區域設定
+            if (filterField) {
+                fieldSettings += `<li>將【${filterField}】拖曳到「篩選」區域。</li>`;
+            }
+            
+            // 列區域設定
+            if (rowField) {
+                fieldSettings += `<li>將【${rowField}】拖曳到「列」區域。</li>`;
+            }
+            
+            // 欄區域設定
+            if (columnField) {
+                fieldSettings += `<li>將【${columnField}】拖曳到「欄」區域。</li>`;
+            }
+            
+            // 值區域設定
+            fieldSettings += `<li>將【${valueField}】拖曳到「值」區域。</li>`;
+            fieldSettings += '</ul>';
+            
+            step3.innerHTML += fieldSettings;
+            setupSteps.appendChild(step3);
+            
+            // 步驟4：設定值區域的計算方式和顯示方式
+            const step4 = document.createElement('li');
+            step4.innerHTML = `<strong>設定值區域計算和呈現方式：</strong><br>
+                在「值」區域中點擊【${valueField}】→ 選擇「值欄位設定」：<br>
+                <ul>
+                    <li>在「摘要方式」標籤中選擇「${calculationText}」。</li>
+                    <li>在「顯示方式」標籤中選擇「${displayText}」。</li>
+                </ul>`;
+            setupSteps.appendChild(step4);
+            
+            // 顯示分隔線
+            document.getElementById('divider').style.display = 'block';
+            
+            // 顯示結果區域
+            document.getElementById('results').style.display = 'block';
+            
+            // 滾動到結果區域
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function getCalculationText(method) {
+            const methods = {
+                'sum': '總和',
+                'count': '計數',
+                'average': '平均值',
+                'max': '最大值',
+                'min': '最小值'
+            };
+            return methods[method] || method;
+        }
+        
+        function getDisplayText(method) {
+            const methods = {
+                'normal': '原始值',
+                'percent-total': '總計百分比',
+                'percent-row': '列總計百分比',
+                'percent-column': '欄總計百分比',
+                'diff-prev': '與上一項的差異',
+                'percent-diff': '與上一項的百分比',
+                'running-total': '累計總計',
+                'percent-parent': '分項佔小計的百分比'
+            };
+            return methods[method] || method;
+        }
+        
+        // 頁面加載時初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 綁定所有輸入欄位的事件
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('change', updatePreview);
+            });
+        });
+    </script>
+</body>
+</html>
